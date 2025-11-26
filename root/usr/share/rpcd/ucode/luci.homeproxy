@@ -144,7 +144,7 @@ const methods = {
 	log_clean: {
 		args: { type: 'type' },
 		call: function(req) {
-			if (!(req.args?.type in ['homeproxy', 'sing-box-c', 'sing-box-s']))
+			if (!(req.args?.type in ['homeproxy', 'xray-c', 'xray-s']))
 				return { result: false, error: 'illegal type' };
 
 			const filestat = lstat(`${RUN_DIR}/${req.args?.type}.log`);
@@ -154,45 +154,27 @@ const methods = {
 		}
 	},
 
-	singbox_generator: {
+	xray_generator: {
 		args: { type: 'type', params: 'params' },
 		call: function(req) {
-			if (!(req.args?.type in ['ech-keypair', 'uuid', 'reality-keypair', 'vapid-keypair', 'wg-keypair']))
+			if (!(req.args?.type in ['uuid', 'x25519']))
 				return { result: false, error: 'illegal type' };
 
 			const type = req.args?.type;
 			let result = {};
 
-			const fd = popen('/usr/bin/sing-box generate ' + type + ` ${req.args?.params || ''}`);
+			const fd = popen('/usr/bin/xray ' + type + ` ${req.args?.params || ''}`);
 			if (fd) {
-				let ech_cfg_set = false;
-				let ech_key_set = false;
-
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
 					if (type === 'uuid')
 						result.uuid = trim(line);
-					else if (type in ['reality-keypair', 'vapid-keypair', 'wg-keypair']) {
-						let priv = match(trim(line), /PrivateKey: (.*)/);
+					else if (type === 'x25519') {
+						let priv = match(trim(line), /Private key: (.*)/);
 						if (priv)
 							result.private_key = priv[1];
-						let pub = match(trim(line), /PublicKey: (.*)/);
+						let pub = match(trim(line), /Public key: (.*)/);
 						if (pub)
 							result.public_key = pub[1];
-					} else if (type in ['ech-keypair']) {
-						if (trim(line) === '-----BEGIN ECH CONFIGS-----')
-							ech_cfg_set = true;
-						else if (trim(line) === '-----BEGIN ECH KEYS-----')
-							ech_key_set = true;
-
-						if (ech_cfg_set)
-							result.ech_cfg = result.ech_cfg ? result.ech_cfg + '\n' + trim(line) : trim(line) ;
-						if (ech_key_set)
-							result.ech_key = result.ech_key ? result.ech_key + '\n' + trim(line) : trim(line) ;
-
-						if (trim(line) === '-----END ECH CONFIGS-----')
-							ech_cfg_set = false;
-						else if (trim(line) === '-----END ECH KEYS-----')
-							ech_key_set = false;
 					}
 				}
 
@@ -203,29 +185,21 @@ const methods = {
 		}
 	},
 
-	singbox_get_features: {
+	xray_get_features: {
 		call: function() {
 			let features = {};
 
-			const fd = popen('/usr/bin/sing-box version');
+			const fd = popen('/usr/bin/xray version');
 			if (fd) {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
-					if (match(trim(line), /^sing-box version (.*)/))
-						features.version = match(trim(line), /^sing-box version (.*)/)[1];
-
-					let tags = match(trim(line), /^Tags: (.*)/);
-					if (tags)
-						for (let i in split(tags[1], ','))
-							features[i] = true;
+					if (match(trim(line), /^Xray (.*)/))
+						features.version = match(trim(line), /^Xray (.*)/)[1];
 				}
 
 				fd.close();
 			}
 
-			features.hp_has_ip_full = access('/usr/libexec/ip-full');
-			features.hp_has_tcp_brutal = hasKernelModule('brutal.ko');
 			features.hp_has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
-			features.hp_has_tun = hasKernelModule('tun.ko') || access('/etc/modules.d/30-tun');
 
 			return features;
 		}
@@ -234,19 +208,36 @@ const methods = {
 	resources_get_version: {
 		args: { type: 'type' },
 		call: function(req) {
-			const version = trim(readfile(`${HP_DIR}/resources/${req.args?.type}.ver`));
-			return { version: version, error: error() };
+			const type = req.args?.type;
+			if (!(type in ['geoip', 'geosite']))
+				return { version: null, error: 'illegal type' };
+
+			/* Get version from opkg */
+			let version = null;
+			const pkg = (type === 'geoip') ? 'v2ray-geoip' : 'v2ray-geosite';
+			const fd = popen(`opkg list-installed ${pkg} 2>/dev/null`);
+			if (fd) {
+				const line = fd.read('line');
+				if (line) {
+					const parts = split(trim(line), ' - ');
+					if (length(parts) >= 2)
+						version = parts[1];
+				}
+				fd.close();
+			}
+
+			return { version: version, error: version ? null : 'not installed' };
 		}
 	},
 	resources_update: {
 		args: { type: 'type' },
 		call: function(req) {
-			if (req.args?.type) {
-				const type = shellquote(req.args?.type);
-				const exit_code = system(`${HP_DIR}/scripts/update_resources.sh ${type}`);
-				return { status: exit_code };
-			} else
+			const type = req.args?.type;
+			if (!(type in ['geoip', 'geosite']))
 				return { status: 255, error: 'illegal type' };
+
+			const exit_code = system(`${HP_DIR}/scripts/update_resources.sh ${shellquote(type)}`);
+			return { status: exit_code };
 		}
 	}
 };

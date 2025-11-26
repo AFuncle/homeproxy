@@ -38,10 +38,10 @@ jobs:
 
     steps:
       - name: Checkout source tree
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Checkout apk
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           repository: 'alpinelinux/apk-tools'
           path: 'apk-tools'
@@ -49,7 +49,7 @@ jobs:
           ref: '6ffc65c63004b8d991ead4ea0f3d80e05b06b977'
 
       - name: Checkout po2lmo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           repository: 'openwrt/luci'
           path: 'po2lmo'

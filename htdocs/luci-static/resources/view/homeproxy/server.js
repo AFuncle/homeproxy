@@ -45,21 +45,20 @@ function getServiceStatus() {
 	return L.resolveDefault(callServiceList('homeproxy'), {}).then((res) => {
 		let isRunning = false;
 		try {
-			isRunning = res['homeproxy']['instances']['sing-box-s']['running'];
+			isRunning = res['homeproxy']['instances']['xray-s']['running'];
 		} catch (e) { }
 		return isRunning;
 	});
 }
 
 function renderStatus(isRunning, version) {
-	let spanTemp = '<em><span style="color:%s"><strong>%s (sing-box v%s) %s</strong></span></em>';
-	let renderHTML;
+	/* Extract version number only (e.g., "25.2.21" from "25.2.21 (Xray, Penetrates Everything.) ...") */
+	let versionNum = version ? version.split(' ')[0] : 'Unknown';
+	let spanTemp = '<em><span style="color:%s"><strong>HomeProxy (Xray v%s) %s</strong></span></em>';
 	if (isRunning)
-		renderHTML = spanTemp.format('green', _('HomeProxy Server'), version, _('RUNNING'));
+		return spanTemp.format('green', versionNum, _('RUNNING'));
 	else
-		renderHTML = spanTemp.format('red', _('HomeProxy Server'), version, _('NOT RUNNING'));
-
-	return renderHTML;
+		return spanTemp.format('red', versionNum, _('NOT RUNNING'));
 }
 
 function handleGenKey(option) {
@@ -69,15 +68,15 @@ function handleGenKey(option) {
 		return this.map.findElement('id', 'widget.' + this.cbid(section_id).replace(/\.[^\.]+$/, '.') + option);
 	}, this);
 
-	const callSingBoxGenerator = rpc.declare({
+	const callXrayGenerator = rpc.declare({
 		object: 'luci.homeproxy',
-		method: 'singbox_generator',
+		method: 'xray_generator',
 		params: ['type', 'params'],
 		expect: { '': {} }
 	});
 
 	if (typeof option === 'object') {
-		return callSingBoxGenerator(option.type, option.params).then((res) => {
+		return callXrayGenerator(option.type, option.params).then((res) => {
 			if (res.result)
 				option.callback.call(this, res.result).forEach(([k, v]) => {
 					widget(k).value = v ?? '';
@@ -173,19 +172,10 @@ return view.extend({
 		o.editable = true;
 
 		o = s.option(form.ListValue, 'type', _('Type'));
-		o.value('anytls', _('AnyTLS'));
 		o.value('http', _('HTTP'));
-		if (features.with_quic) {
-			o.value('hysteria', _('Hysteria'));
-			o.value('hysteria2', _('Hysteria2'));
-			o.value('naive', _('NaïveProxy'));
-		}
-		o.value('mixed', _('Mixed'));
 		o.value('shadowsocks', _('Shadowsocks'));
 		o.value('socks', _('Socks'));
 		o.value('trojan', _('Trojan'));
-		if (features.with_quic)
-			o.value('tuic', _('Tuic'));
 		o.value('vless', _('VLESS'));
 		o.value('vmess', _('VMess'));
 		o.rmempty = false;
@@ -202,23 +192,18 @@ return view.extend({
 
 		o = s.option(form.Value, 'username', _('Username'));
 		o.depends('type', 'http');
-		o.depends('type', 'mixed');
-		o.depends('type', 'naive');
 		o.depends('type', 'socks');
 		o.modalonly = true;
 
 		o = s.option(CBIGenValue, 'password', _('Password'));
 		o.password = true;
-		o.depends('type', 'anytls');
-		o.depends({'type': /^(http|mixed|naive|socks)$/, 'username': /[\s\S]/});
-		o.depends('type', 'hysteria2');
+		o.depends({'type': /^(http|socks)$/, 'username': /[\s\S]/});
 		o.depends('type', 'shadowsocks');
 		o.depends('type', 'trojan');
-		o.depends('type', 'tuic');
 		o.validate = function(section_id, value) {
 			if (section_id) {
 				let type = this.section.formvalue(section_id, 'type');
-				let required_type = [ 'anytls', 'http', 'mixed', 'naive', 'socks', 'shadowsocks', 'trojan' ];
+				let required_type = [ 'http', 'socks', 'shadowsocks', 'trojan' ];
 
 				if (required_type.includes(type)) {
 					if (type === 'shadowsocks') {
@@ -240,100 +225,6 @@ return view.extend({
 		}
 		o.modalonly = true;
 
-		/* AnyTLS config */
-		o = s.option(form.DynamicList, 'anytls_padding_scheme', _('Padding scheme'),
-			_('AnyTLS padding scheme in array.'));
-		o.depends('type', 'anytls');
-		o.modalonly = true;
-
-		/* Hysteria (2) config start */
-		o = s.option(form.ListValue, 'hysteria_protocol', _('Protocol'));
-		o.value('udp');
-		/* WeChat-Video / FakeTCP are unsupported by sing-box currently
-		   o.value('wechat-video');
-		   o.value('faketcp');
-		*/
-		o.default = 'udp';
-		o.depends('type', 'hysteria');
-		o.rmempty = false;
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'hysteria_down_mbps', _('Max download speed'),
-			_('Max download speed in Mbps.'));
-		o.datatype = 'uinteger';
-		o.depends('type', 'hysteria');
-		o.depends('type', 'hysteria2');
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'hysteria_up_mbps', _('Max upload speed'),
-			_('Max upload speed in Mbps.'));
-		o.datatype = 'uinteger';
-		o.depends('type', 'hysteria');
-		o.depends('type', 'hysteria2');
-		o.modalonly = true;
-
-		o = s.option(form.ListValue, 'hysteria_auth_type', _('Authentication type'));
-		o.value('', _('Disable'));
-		o.value('base64', _('Base64'));
-		o.value('string', _('String'));
-		o.depends('type', 'hysteria');
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'hysteria_auth_payload', _('Authentication payload'));
-		o.password = true;
-		o.depends({'type': 'hysteria', 'hysteria_auth_type': /[\s\S]/});
-		o.rmempty = false;
-		o.modalonly = true;
-
-		o = s.option(form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
-		o.value('', _('Disable'));
-		o.value('salamander', _('Salamander'));
-		o.depends('type', 'hysteria2');
-		o.modalonly = true;
-
-		o = s.option(CBIGenValue, 'hysteria_obfs_password', _('Obfuscate password'));
-		o.password = true;
-		o.depends('type', 'hysteria');
-		o.depends({'type': 'hysteria2', 'hysteria_obfs_type': /[\s\S]/});
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'hysteria_recv_window_conn', _('QUIC stream receive window'),
-			_('The QUIC stream-level flow control window for receiving data.'));
-		o.datatype = 'uinteger';
-		o.default = '67108864';
-		o.depends('type', 'hysteria');
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'hysteria_recv_window_client', _('QUIC connection receive window'),
-			_('The QUIC connection-level flow control window for receiving data.'));
-		o.datatype = 'uinteger';
-		o.default = '15728640';
-		o.depends('type', 'hysteria');
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'hysteria_max_conn_client', _('QUIC maximum concurrent bidirectional streams'),
-			_('The maximum number of QUIC concurrent bidirectional streams that a peer is allowed to open.'));
-		o.datatype = 'uinteger';
-		o.default = '1024';
-		o.depends('type', 'hysteria');
-		o.modalonly = true;
-
-		o = s.option(form.Flag, 'hysteria_disable_mtu_discovery', _('Disable Path MTU discovery'),
-			_('Disables Path MTU Discovery (RFC 8899). Packets will then be at most 1252 (IPv4) / 1232 (IPv6) bytes in size.'));
-		o.depends('type', 'hysteria');
-		o.modalonly = true;
-
-		o = s.option(form.Flag, 'hysteria_ignore_client_bandwidth', _('Ignore client bandwidth'),
-			_('Tell the client to use the BBR flow control algorithm instead of Hysteria CC.'));
-		o.depends({'type': 'hysteria2', 'hysteria_down_mbps': '', 'hysteria_up_mbps': ''});
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'hysteria_masquerade', _('Masquerade'),
-			_('HTTP3 server behavior when authentication fails.<br/>A 404 page will be returned if empty.'));
-		o.depends('type', 'hysteria2');
-		o.modalonly = true;
-		/* Hysteria (2) config end */
-
 		/* Shadowsocks config */
 		o = s.option(form.ListValue, 'shadowsocks_encrypt_method', _('Encrypt method'));
 		for (let i of hp.shadowsocks_encrypt_methods)
@@ -342,46 +233,14 @@ return view.extend({
 		o.depends('type', 'shadowsocks');
 		o.modalonly = true;
 
-		/* Tuic config start */
+		/* VLESS / VMess config start */
 		o = s.option(CBIGenValue, 'uuid', _('UUID'));
 		o.password = true;
-		o.depends('type', 'tuic');
 		o.depends('type', 'vless');
 		o.depends('type', 'vmess');
 		o.validate = hp.validateUUID;
 		o.modalonly = true;
 
-		o = s.option(form.ListValue, 'tuic_congestion_control', _('Congestion control algorithm'),
-			_('QUIC congestion control algorithm.'));
-		o.value('cubic');
-		o.value('new_reno');
-		o.value('bbr');
-		o.default = 'cubic';
-		o.depends('type', 'tuic');
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'tuic_auth_timeout', _('Auth timeout'),
-			_('How long the server should wait for the client to send the authentication command (in seconds).'));
-		o.datatype = 'uinteger';
-		o.default = '3';
-		o.depends('type', 'tuic');
-		o.modalonly = true;
-
-		o = s.option(form.Flag, 'tuic_enable_zero_rtt', _('Enable 0-RTT handshake'),
-			_('Enable 0-RTT QUIC connection handshake on the client side. This is not impacting much on the performance, as the protocol is fully multiplexed.<br/>' +
-				'Disabling this is highly recommended, as it is vulnerable to replay attacks.'));
-		o.depends('type', 'tuic');
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'tuic_heartbeat', _('Heartbeat interval'),
-			_('Interval for sending heartbeat packets for keeping the connection alive (in seconds).'));
-		o.datatype = 'uinteger';
-		o.default = '10';
-		o.depends('type', 'tuic');
-		o.modalonly = true;
-		/* Tuic config end */
-
-		/* VLESS / VMess config start */
 		o = s.option(form.ListValue, 'vless_flow', _('Flow'));
 		o.value('', _('None'));
 		o.value('xtls-rprx-vision');
@@ -530,31 +389,11 @@ return view.extend({
 
 		/* TLS config start */
 		o = s.option(form.Flag, 'tls', _('TLS'));
-		o.depends('type', 'anytls');
 		o.depends('type', 'http');
-		o.depends('type', 'hysteria');
-		o.depends('type', 'hysteria2');
-		o.depends('type', 'naive');
 		o.depends('type', 'trojan');
-		o.depends('type', 'tuic');
 		o.depends('type', 'vless');
 		o.depends('type', 'vmess');
 		o.rmempty = false;
-		o.validate = function(section_id, value) {
-			if (section_id) {
-				let type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
-				let tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
-
-				if (['hysteria', 'hysteria2', 'tuic'].includes(type)) {
-					tls.checked = true;
-					tls.disabled = true;
-				} else {
-					tls.disabled = null;
-				}
-			}
-
-			return true;
-		}
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'tls_sni', _('TLS SNI'),
@@ -707,14 +546,14 @@ return view.extend({
 		}
 
 		o = s.option(form.Flag, 'tls_reality', _('REALITY'));
-		o.depends({'tls': '1', 'tls_acme': '0', 'type': /^(anytls|vless)$/});
-		o.depends({'tls': '1', 'tls_acme': null, 'type': /^(anytls|vless)$/});
+		o.depends({'tls': '1', 'tls_acme': '0', 'type': 'vless'});
+		o.depends({'tls': '1', 'tls_acme': null, 'type': 'vless'});
 		o.modalonly = true;
 
 		o = s.option(CBIGenValue, 'tls_reality_private_key', _('REALITY private key'));
 		o.password = true;
 		o.hp_options = {
-			type: 'reality-keypair',
+			type: 'x25519',
 			params: '',
 			callback: function(result) {
 				return [
@@ -867,7 +706,6 @@ return view.extend({
 		o.value('tcp', _('TCP'));
 		o.value('udp', _('UDP'));
 		o.value('', _('Both'));
-		o.depends('type', 'naive');
 		o.depends('type', 'shadowsocks');
 		o.modalonly = true;
 

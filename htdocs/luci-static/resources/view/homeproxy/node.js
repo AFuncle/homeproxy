@@ -25,27 +25,6 @@ function parseShareLink(uri, features) {
 	uri = uri.split('://');
 	if (uri[0] && uri[1]) {
 		switch (uri[0]) {
-		case 'anytls':
-			/* https://github.com/anytls/anytls-go/blob/v0.0.8/docs/uri_scheme.md */
-			url = new URL('http://' + uri[1]);
-			params = url.searchParams;
-
-			/* Check if password exists */
-			if (!url.username)
-				return null;
-
-			config = {
-				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
-				type: 'anytls',
-				address: url.hostname,
-				port: url.port || '80',
-				password: url.username ? decodeURIComponent(url.username) : null,
-				tls: '1',
-				tls_sni: params.get('sni'),
-				tls_insecure: (params.get('insecure') === '1') ? '1' : '0'
-			};
-
-			break;
 		case 'http':
 		case 'https':
 			url = new URL('http://' + uri[1]);
@@ -58,58 +37,6 @@ function parseShareLink(uri, features) {
 				username: url.username ? decodeURIComponent(url.username) : null,
 				password: url.password ? decodeURIComponent(url.password) : null,
 				tls: (uri[0] === 'https') ? '1' : '0'
-			};
-
-			break;
-		case 'hysteria':
-			/* https://github.com/HyNetwork/hysteria/wiki/URI-Scheme */
-			url = new URL('http://' + uri[1]);
-			params = url.searchParams;
-
-			/* WeChat-Video / FakeTCP are unsupported by sing-box currently */
-			if (!features.with_quic || (params.get('protocol') && params.get('protocol') !== 'udp'))
-				return null;
-
-			config = {
-				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
-				type: 'hysteria',
-				address: url.hostname,
-				port: url.port || '80',
-				hysteria_protocol: params.get('protocol') || 'udp',
-				hysteria_auth_type: params.get('auth') ? 'string' : null,
-				hysteria_auth_payload: params.get('auth'),
-				hysteria_obfs_password: params.get('obfsParam'),
-				hysteria_down_mbps: params.get('downmbps'),
-				hysteria_up_mbps: params.get('upmbps'),
-				tls: '1',
-				tls_sni: params.get('peer'),
-				tls_alpn: params.get('alpn'),
-				tls_insecure: (params.get('insecure') === '1') ? '1' : '0'
-			};
-
-			break;
-		case 'hysteria2':
-		case 'hy2':
-			/* https://v2.hysteria.network/docs/developers/URI-Scheme/ */
-			url = new URL('http://' + uri[1]);
-			params = url.searchParams;
-
-			if (!features.with_quic)
-				return null;
-
-			config = {
-				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
-				type: 'hysteria2',
-				address: url.hostname,
-				port: url.port || '80',
-				password: url.username ? (
-					decodeURIComponent(url.username + (url.password ? (':' + url.password) : ''))
-				) : null,
-				hysteria_obfs_type: params.get('obfs'),
-				hysteria_obfs_password: params.get('obfs-password'),
-				tls: '1',
-				tls_sni: params.get('sni'),
-				tls_insecure: params.get('insecure') ? '1' : '0'
 			};
 
 			break;
@@ -228,30 +155,6 @@ function parseShareLink(uri, features) {
 				}
 				break;
 			}
-
-			break;
-		case 'tuic':
-			/* https://github.com/daeuniverse/dae/discussions/182 */
-			url = new URL('http://' + uri[1]);
-			params = url.searchParams;
-
-			/* Check if uuid exists */
-			if (!url.username)
-				return null;
-
-			config = {
-				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
-				type: 'tuic',
-				address: url.hostname,
-				port: url.port || '80',
-				uuid: url.username,
-				password: url.password ? decodeURIComponent(url.password) : null,
-				tuic_congestion_control: params.get('congestion_control'),
-				tuic_udp_relay_mode: params.get('udp_relay_mode'),
-				tls: '1',
-				tls_sni: params.get('sni'),
-				tls_alpn: params.get('alpn') ? decodeURIComponent(params.get('alpn')).split(',') : null
-			};
 
 			break;
 		case 'vless':
@@ -426,21 +329,10 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.ListValue, 'type', _('Type'));
 	o.value('direct', _('Direct'));
-	o.value('anytls', _('AnyTLS'));
 	o.value('http', _('HTTP'));
-	if (features.with_quic) {
-		o.value('hysteria', _('Hysteria'));
-		o.value('hysteria2', _('Hysteria2'));
-	}
 	o.value('shadowsocks', _('Shadowsocks'));
-	o.value('shadowtls', _('ShadowTLS'));
 	o.value('socks', _('Socks'));
-	o.value('ssh', _('SSH'));
 	o.value('trojan', _('Trojan'));
-	if (features.with_quic)
-		o.value('tuic', _('Tuic'));
-	if (features.with_wireguard && features.with_gvisor)
-		o.value('wireguard', _('WireGuard'));
 	o.value('vless', _('VLESS'));
 	o.value('vmess', _('VMess'));
 	o.rmempty = false;
@@ -458,25 +350,18 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o = s.option(form.Value, 'username', _('Username'));
 	o.depends('type', 'http');
 	o.depends('type', 'socks');
-	o.depends('type', 'ssh');
 	o.modalonly = true;
 
 	o = s.option(form.Value, 'password', _('Password'));
 	o.password = true;
-	o.depends('type', 'anytls');
 	o.depends('type', 'http');
-	o.depends('type', 'hysteria2');
 	o.depends('type', 'shadowsocks');
-	o.depends('type', 'ssh');
 	o.depends('type', 'trojan');
-	o.depends('type', 'tuic');
-	o.depends({'type': 'shadowtls', 'shadowtls_version': '2'});
-	o.depends({'type': 'shadowtls', 'shadowtls_version': '3'});
 	o.depends({'type': 'socks', 'socks_version': '5'});
 	o.validate = function(section_id, value) {
 		if (section_id) {
 			let type = this.section.formvalue(section_id, 'type');
-			let required_type = [ 'anytls', 'shadowsocks', 'shadowtls', 'trojan' ];
+			let required_type = [ 'shadowsocks', 'trojan' ];
 
 			if (required_type.includes(type)) {
 				if (type === 'shadowsocks') {
@@ -501,112 +386,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.value('2', _('v2'));
 	o.depends('type', 'direct');
 	o.modalonly = true;
-
-	/* AnyTLS config start */
-	o = s.option(form.Value, 'anytls_idle_session_check_interval', _('Idle session check interval'),
-		_('Interval checking for idle sessions, in seconds.'));
-	o.datatype = 'uinteger';
-	o.placeholder = '30';
-	o.depends('type', 'anytls');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'anytls_idle_session_timeout', _('Idle session check timeout'),
-		_('In the check, close sessions that have been idle for longer than this, in seconds.'));
-	o.datatype = 'uinteger';
-	o.placeholder = '30';
-	o.depends('type', 'anytls');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'anytls_min_idle_session', _('Minimum idle sessions'),
-		_('In the check, at least the first <code>n</code> idle sessions are kept open.'));
-	o.datatype = 'uinteger';
-	o.placeholder = '0';
-	o.depends('type', 'anytls');
-	o.modalonly = true;
-	/* AnyTLS config end */
-
-	/* Hysteria (2) config start */
-	o = s.option(form.DynamicList, 'hysteria_hopping_port', _('Hopping port'));
-	o.depends('type', 'hysteria');
-	o.depends('type', 'hysteria2');
-	o.validate = hp.validatePortRange;
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'hysteria_hop_interval', _('Hop interval'),
-		_('Port hopping interval in seconds.'));
-	o.datatype = 'uinteger';
-	o.placeholder = '30';
-	o.depends({'type': 'hysteria', 'hysteria_hopping_port': /[\s\S]/});
-	o.depends({'type': 'hysteria2', 'hysteria_hopping_port': /[\s\S]/});
-	o.modalonly = true;
-
-	o = s.option(form.ListValue, 'hysteria_protocol', _('Protocol'));
-	o.value('udp');
-	/* WeChat-Video / FakeTCP are unsupported by sing-box currently
-	 * o.value('wechat-video');
-	 * o.value('faketcp');
-	 */
-	o.default = 'udp';
-	o.depends('type', 'hysteria');
-	o.rmempty = false;
-	o.modalonly = true;
-
-	o = s.option(form.ListValue, 'hysteria_auth_type', _('Authentication type'));
-	o.value('', _('Disable'));
-	o.value('base64', _('Base64'));
-	o.value('string', _('String'));
-	o.depends('type', 'hysteria');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'hysteria_auth_payload', _('Authentication payload'));
-	o.password = true
-	o.depends({'type': 'hysteria', 'hysteria_auth_type': /[\s\S]/});
-	o.rmempty = false;
-	o.modalonly = true;
-
-	o = s.option(form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
-	o.value('', _('Disable'));
-	o.value('salamander', _('Salamander'));
-	o.depends('type', 'hysteria2');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'hysteria_obfs_password', _('Obfuscate password'));
-	o.password = true;
-	o.depends('type', 'hysteria');
-	o.depends({'type': 'hysteria2', 'hysteria_obfs_type': /[\s\S]/});
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'hysteria_down_mbps', _('Max download speed'),
-		_('Max download speed in Mbps.'));
-	o.datatype = 'uinteger';
-	o.depends('type', 'hysteria');
-	o.depends('type', 'hysteria2');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'hysteria_up_mbps', _('Max upload speed'),
-		_('Max upload speed in Mbps.'));
-	o.datatype = 'uinteger';
-	o.depends('type', 'hysteria');
-	o.depends('type', 'hysteria2');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'hysteria_recv_window_conn', _('QUIC stream receive window'),
-		_('The QUIC stream-level flow control window for receiving data.'));
-	o.datatype = 'uinteger';
-	o.depends('type', 'hysteria');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'hysteria_revc_window', _('QUIC connection receive window'),
-		_('The QUIC connection-level flow control window for receiving data.'));
-	o.datatype = 'uinteger';
-	o.depends('type', 'hysteria');
-	o.modalonly = true;
-
-	o = s.option(form.Flag, 'hysteria_disable_mtu_discovery', _('Disable Path MTU discovery'),
-		_('Disables Path MTU Discovery (RFC 8899). Packets will then be at most 1252 (IPv4) / 1232 (IPv6) bytes in size.'));
-	o.depends('type', 'hysteria');
-	o.modalonly = true;
-	/* Hysteria (2) config end */
 
 	/* Shadowsocks config start */
 	o = s.option(form.ListValue, 'shadowsocks_encrypt_method', _('Encrypt method'));
@@ -640,16 +419,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.modalonly = true;
 	/* Shadowsocks config end */
 
-	/* ShadowTLS config */
-	o = s.option(form.ListValue, 'shadowtls_version', _('ShadowTLS version'));
-	o.value('1', _('v1'));
-	o.value('2', _('v2'));
-	o.value('3', _('v3'));
-	o.default = '1';
-	o.depends('type', 'shadowtls');
-	o.rmempty = false;
-	o.modalonly = true;
-
 	/* Socks config */
 	o = s.option(form.ListValue, 'socks_version', _('Socks version'));
 	o.value('4', _('Socks4'));
@@ -660,79 +429,14 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.rmempty = false;
 	o.modalonly = true;
 
-	/* SSH config start */
-	o = s.option(form.Value, 'ssh_client_version', _('Client version'),
-		_('Random version will be used if empty.'));
-	o.depends('type', 'ssh');
-	o.modalonly = true;
-
-	o = s.option(form.DynamicList, 'ssh_host_key', _('Host key'),
-		_('Accept any if empty.'));
-	o.depends('type', 'ssh');
-	o.modalonly = true;
-
-	o = s.option(form.DynamicList, 'ssh_host_key_algo', _('Host key algorithms'))
-	o.depends('type', 'ssh');
-	o.modalonly = true;
-
-	o = s.option(form.DynamicList, 'ssh_priv_key', _('Private key'));
-	o.password = true;
-	o.depends('type', 'ssh');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'ssh_priv_key_pp', _('Private key passphrase'));
-	o.password = true;
-	o.depends('type', 'ssh');
-	o.modalonly = true;
-	/* SSH config end */
-
-	/* TUIC config start */
+	/* VMess / VLESS config start */
 	o = s.option(form.Value, 'uuid', _('UUID'));
 	o.password = true;
-	o.depends('type', 'tuic');
 	o.depends('type', 'vless');
 	o.depends('type', 'vmess');
 	o.validate = hp.validateUUID;
 	o.modalonly = true;
 
-	o = s.option(form.ListValue, 'tuic_congestion_control', _('Congestion control algorithm'),
-		_('QUIC congestion control algorithm.'));
-	o.value('cubic', _('CUBIC'));
-	o.value('new_reno', _('New Reno'));
-	o.value('bbr', _('BBR'));
-	o.default = 'cubic';
-	o.depends('type', 'tuic');
-	o.rmempty = false;
-	o.modalonly = true;
-
-	o = s.option(form.ListValue, 'tuic_udp_relay_mode', _('UDP relay mode'),
-		_('UDP packet relay mode.'));
-	o.value('', _('Default'));
-	o.value('native', _('Native'));
-	o.value('quic', _('QUIC'));
-	o.depends('type', 'tuic');
-	o.modalonly = true;
-
-	o = s.option(form.Flag, 'tuic_udp_over_stream', _('UDP over stream'),
-		_('This is the TUIC port of the UDP over TCP protocol, designed to provide a QUIC stream based UDP relay mode that TUIC does not provide.'));
-	o.depends({'type': 'tuic','tuic_udp_relay_mode': ''});
-	o.modalonly = true;
-
-	o = s.option(form.Flag, 'tuic_enable_zero_rtt', _('Enable 0-RTT handshake'),
-		_('Enable 0-RTT QUIC connection handshake on the client side. This is not impacting much on the performance, as the protocol is fully multiplexed.<br/>' +
-			'Disabling this is highly recommended, as it is vulnerable to replay attacks.'));
-	o.depends('type', 'tuic');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'tuic_heartbeat', _('Heartbeat interval'),
-		_('Interval for sending heartbeat packets for keeping the connection alive (in seconds).'));
-	o.datatype = 'uinteger';
-	o.default = '10';
-	o.depends('type', 'tuic');
-	o.modalonly = true;
-	/* Tuic config end */
-
-	/* VMess / VLESS config start */
 	o = s.option(form.ListValue, 'vless_flow', _('Flow'));
 	o.value('', _('None'));
 	o.value('xtls-rprx-vision');
@@ -778,6 +482,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.value('httpupgrade', _('HTTPUpgrade'));
 	o.value('quic', _('QUIC'));
 	o.value('ws', _('WebSocket'));
+	o.value('xhttp', _('XHTTP'));
 	o.depends('type', 'trojan');
 	o.depends('type', 'vless');
 	o.depends('type', 'vmess');
@@ -861,6 +566,39 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.modalonly = true;
 	/* HTTP config end */
 
+	/* XHTTP config start */
+	o = s.option(form.Value, 'xhttp_host', _('Host'));
+	o.datatype = 'hostname';
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_path', _('Path'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.ListValue, 'xhttp_mode', _('Mode'));
+	o.value('auto', _('Auto'));
+	o.value('packet', _('Packet'));
+	o.value('stream', _('Stream'));
+	o.default = 'auto';
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_extra', _('Extra'), _('JSON format extra settings'));
+	o.depends('transport', 'xhttp');
+	o.validate = function(section_id, value) {
+		if (section_id && value) {
+			try {
+				JSON.parse(value);
+			} catch (e) {
+				return _('Invalid JSON format');
+			}
+		}
+		return true;
+	}
+	o.modalonly = true;
+	/* XHTTP config end */
+
 	/* WebSocket config start */
 	o = s.option(form.Value, 'ws_host', _('Host'));
 	o.depends('transport', 'ws');
@@ -891,54 +629,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.depends('type', 'vmess');
 	o.modalonly = true;
 	/* Transport config end */
-
-	/* Wireguard config start */
-	o = s.option(form.DynamicList, 'wireguard_local_address', _('Local address'),
-		_('List of IP (v4 or v6) addresses prefixes to be assigned to the interface.'));
-	o.datatype = 'cidr';
-	o.depends('type', 'wireguard');
-	o.rmempty = false;
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'wireguard_private_key', _('Private key'),
-		_('WireGuard requires base64-encoded private keys.'));
-	o.password = true;
-	o.depends('type', 'wireguard');
-	o.validate = L.bind(hp.validateBase64Key, this, 44);
-	o.rmempty = false;
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'wireguard_peer_public_key', _('Peer pubkic key'),
-		_('WireGuard peer public key.'));
-	o.depends('type', 'wireguard');
-	o.validate = L.bind(hp.validateBase64Key, this, 44);
-	o.rmempty = false;
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'wireguard_pre_shared_key', _('Pre-shared key'),
-		_('WireGuard pre-shared key.'));
-	o.password = true;
-	o.depends('type', 'wireguard');
-	o.validate = L.bind(hp.validateBase64Key, this, 44);
-	o.modalonly = true;
-
-	o = s.option(form.DynamicList, 'wireguard_reserved', _('Reserved field bytes'));
-	o.datatype = 'integer';
-	o.depends('type', 'wireguard');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'wireguard_mtu', _('MTU'));
-	o.datatype = 'range(0,9000)';
-	o.placeholder = '1408';
-	o.depends('type', 'wireguard');
-	o.modalonly = true;
-
-	o = s.option(form.Value, 'wireguard_persistent_keepalive_interval', _('Persistent keepalive interval'),
-		_('In seconds. Disabled by default.'));
-	o.datatype = 'uinteger';
-	o.depends('type', 'wireguard');
-	o.modalonly = true;
-	/* Wireguard config end */
 
 	/* Mux config start */
 	o = s.option(form.Flag, 'multiplex', _('Multiplex'));
@@ -1001,30 +691,10 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	/* TLS config start */
 	o = s.option(form.Flag, 'tls', _('TLS'));
-	o.depends('type', 'anytls');
 	o.depends('type', 'http');
-	o.depends('type', 'hysteria');
-	o.depends('type', 'hysteria2');
-	o.depends('type', 'shadowtls');
 	o.depends('type', 'trojan');
-	o.depends('type', 'tuic');
 	o.depends('type', 'vless');
 	o.depends('type', 'vmess');
-	o.validate = function(section_id, _value) {
-		if (section_id) {
-			let type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
-			let tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
-
-			if (['anytls', 'hysteria', 'hysteria2', 'shadowtls', 'tuic'].includes(type)) {
-				tls.checked = true;
-				tls.disabled = true;
-			} else {
-				tls.disabled = null;
-			}
-		}
-
-		return true;
-	}
 	o.modalonly = true;
 
 	o = s.option(form.Value, 'tls_sni', _('TLS SNI'),
@@ -1109,52 +779,50 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.onclick = L.bind(hp.uploadCertificate, this, _('ECH config'), 'client_ech_conf');
 	o.modalonly = true;
 
-	if (features.with_utls) {
-		o = s.option(form.ListValue, 'tls_utls', _('uTLS fingerprint'),
-			_('uTLS is a fork of "crypto/tls", which provides ClientHello fingerprinting resistance.'));
-		o.value('', _('Disable'));
-		o.value('360');
-		o.value('android');
-		o.value('chrome');
-		o.value('edge');
-		o.value('firefox');
-		o.value('ios');
-		o.value('qq');
-		o.value('random');
-		o.value('randomized');
-		o.value('safari');
-		o.depends({'tls': '1', 'type': /^((?!hysteria2?|tuic$).)+$/});
-		o.validate = function(section_id, value) {
-			if (section_id) {
-				let tls_reality = this.map.findElement('id', 'cbid.homeproxy.%s.tls_reality'.format(section_id)).firstElementChild;
-				if (tls_reality.checked && !value)
-					return _('Expecting: %s').format(_('non-empty value'));
+	/* uTLS fingerprint - Xray always supports this */
+	o = s.option(form.ListValue, 'tls_utls', _('uTLS fingerprint'),
+		_('uTLS is a fork of "crypto/tls", which provides ClientHello fingerprinting resistance.'));
+	o.value('', _('Disable'));
+	o.value('360');
+	o.value('android');
+	o.value('chrome');
+	o.value('edge');
+	o.value('firefox');
+	o.value('ios');
+	o.value('qq');
+	o.value('random');
+	o.value('randomized');
+	o.value('safari');
+	o.depends('tls', '1');
+	o.validate = function(section_id, value) {
+		if (section_id) {
+			let tls_reality = this.map.findElement('id', 'cbid.homeproxy.%s.tls_reality'.format(section_id)).firstElementChild;
+			if (tls_reality.checked && !value)
+				return _('Expecting: %s').format(_('non-empty value'));
 
-				let vless_flow = this.map.lookupOption('vless_flow', section_id)[0].formvalue(section_id);
-				if ((tls_reality.checked || vless_flow) && ['360', 'android'].includes(value))
-					return _('Unsupported fingerprint!');
-			}
-
-			return true;
+			let vless_flow = this.map.lookupOption('vless_flow', section_id)[0].formvalue(section_id);
+			if ((tls_reality.checked || vless_flow) && ['360', 'android'].includes(value))
+				return _('Unsupported fingerprint!');
 		}
-		o.modalonly = true;
 
-		o = s.option(form.Flag, 'tls_reality', _('REALITY'));
-		o.depends({'tls': '1', 'type': 'anytls'});
-		o.depends({'tls': '1', 'type': 'vless'});
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'tls_reality_public_key', _('REALITY public key'));
-		o.password = true;
-		o.depends('tls_reality', '1');
-		o.rmempty = false;
-		o.modalonly = true;
-
-		o = s.option(form.Value, 'tls_reality_short_id', _('REALITY short ID'));
-		o.password = true;
-		o.depends('tls_reality', '1');
-		o.modalonly = true;
+		return true;
 	}
+	o.modalonly = true;
+
+	o = s.option(form.Flag, 'tls_reality', _('REALITY'));
+	o.depends({'tls': '1', 'type': 'vless'});
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'tls_reality_public_key', _('REALITY public key'));
+	o.password = true;
+	o.depends('tls_reality', '1');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'tls_reality_short_id', _('REALITY short ID'));
+	o.password = true;
+	o.depends('tls_reality', '1');
+	o.modalonly = true;
 	/* TLS config end */
 
 	/* Extra settings start */

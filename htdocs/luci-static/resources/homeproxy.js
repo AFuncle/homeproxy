@@ -176,13 +176,13 @@ return baseclass.extend({
 	},
 
 	getBuiltinFeatures() {
-		const callGetSingBoxFeatures = rpc.declare({
+		const callGetXrayFeatures = rpc.declare({
 			object: 'luci.homeproxy',
-			method: 'singbox_get_features',
+			method: 'xray_get_features',
 			expect: { '': {} }
 		});
 
-		return L.resolveDefault(callGetSingBoxFeatures(), {});
+		return L.resolveDefault(callGetXrayFeatures(), {});
 	},
 
 	generateRand(type, length) {

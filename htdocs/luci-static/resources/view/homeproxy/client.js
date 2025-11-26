@@ -42,21 +42,20 @@ function getServiceStatus() {
 	return L.resolveDefault(callServiceList('homeproxy'), {}).then((res) => {
 		let isRunning = false;
 		try {
-			isRunning = res['homeproxy']['instances']['sing-box-c']['running'];
+			isRunning = res['homeproxy']['instances']['xray-c']['running'];
 		} catch (e) { }
 		return isRunning;
 	});
 }
 
 function renderStatus(isRunning, version) {
-	let spanTemp = '<em><span style="color:%s"><strong>%s (sing-box v%s) %s</strong></span></em>';
-	let renderHTML;
+	/* Extract version number only (e.g., "25.2.21" from "25.2.21 (Xray, Penetrates Everything.) ...") */
+	let versionNum = version ? version.split(' ')[0] : 'Unknown';
+	let spanTemp = '<em><span style="color:%s"><strong>HomeProxy (Xray v%s) %s</strong></span></em>';
 	if (isRunning)
-		renderHTML = spanTemp.format('green', _('HomeProxy'), version, _('RUNNING'));
+		return spanTemp.format('green', versionNum, _('RUNNING'));
 	else
-		renderHTML = spanTemp.format('red', _('HomeProxy'), version, _('NOT RUNNING'));
-
-	return renderHTML;
+		return spanTemp.format('red', versionNum, _('NOT RUNNING'));
 }
 
 let stubValidator = {
@@ -283,13 +282,9 @@ return view.extend({
 
 		o = s.taboption('routing', form.ListValue, 'proxy_mode', _('Proxy mode'));
 		o.value('redirect', _('Redirect TCP'));
-		if (features.hp_has_tproxy)
+		if (features.hp_has_tproxy) {
 			o.value('redirect_tproxy', _('Redirect TCP + TProxy UDP'));
-		if (features.hp_has_ip_full && features.hp_has_tun) {
-			o.value('redirect_tun', _('Redirect TCP + Tun UDP'));
-			o.value('tun', _('Tun TCP/UDP'));
-		} else {
-			o.description = _('To enable Tun support, you need to install <code>ip-full</code> and <code>kmod-tun</code>');
+			o.value('tproxy', _('TProxy TCP/UDP'));
 		}
 		o.default = 'redirect_tproxy';
 		o.rmempty = false;
@@ -304,41 +299,13 @@ return view.extend({
 		o.depends('routing_mode', 'custom');
 
 		ss = o.subsection;
-		so = ss.option(form.ListValue, 'tcpip_stack', _('TCP/IP stack'),
-			_('TCP/IP stack.'));
-		if (features.with_gvisor) {
-			so.value('mixed', _('Mixed'));
-			so.value('gvisor', _('gVisor'));
-		}
-		so.value('system', _('System'));
-		so.default = 'system';
-		so.depends('homeproxy.config.proxy_mode', 'redirect_tun');
-		so.depends('homeproxy.config.proxy_mode', 'tun');
-		so.rmempty = false;
-		so.onchange = function(ev, section_id, value) {
-			let desc = ev.target.nextElementSibling;
-			if (value === 'mixed')
-				desc.innerHTML = _('Mixed <code>system</code> TCP stack and <code>gVisor</code> UDP stack.')
-			else if (value === 'gvisor')
-				desc.innerHTML = _('Based on google/gvisor.');
-			else if (value === 'system')
-				desc.innerHTML = _('Less compatibility and sometimes better performance.');
-		}
-
-		so = ss.option(form.Flag, 'endpoint_independent_nat', _('Enable endpoint-independent NAT'),
-			_('Performance may degrade slightly, so it is not recommended to enable on when it is not needed.'));
-		so.default = so.enabled;
-		so.depends('tcpip_stack', 'mixed');
-		so.depends('tcpip_stack', 'gvisor');
-		so.rmempty = false;
 
 		so = ss.option(form.Value, 'udp_timeout', _('UDP NAT expiration time'),
 			_('In seconds.'));
 		so.datatype = 'uinteger';
 		so.placeholder = '300';
 		so.depends('homeproxy.config.proxy_mode', 'redirect_tproxy');
-		so.depends('homeproxy.config.proxy_mode', 'redirect_tun');
-		so.depends('homeproxy.config.proxy_mode', 'tun');
+		so.depends('homeproxy.config.proxy_mode', 'tproxy');
 
 		so = ss.option(form.Flag, 'bypass_cn_traffic', _('Bypass CN traffic'),
 			_('Bypass mainland China traffic via firewall rules by default.'));
@@ -613,7 +580,7 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.taboption('field_other', form.MultiValue, 'protocol', _('Protocol'),
-			_('Sniffed protocol, see <a target="_blank" href="https://sing-box.sagernet.org/configuration/route/sniff/">Sniff</a> for details.'));
+			_('Sniffed protocol, see <a target="_blank" href="https://xtls.github.io/en/config/features/sniffing.html">Sniff</a> for details.'));
 		so.value('bittorrent', _('BitTorrent'));
 		so.value('dns', _('DNS'));
 		so.value('dtls', _('DTLS'));
@@ -1102,7 +1069,7 @@ return view.extend({
 		so.value('', _('Both'));
 
 		so = ss.taboption('field_other', form.MultiValue, 'protocol', _('Protocol'),
-			_('Sniffed protocol, see <a target="_blank" href="https://sing-box.sagernet.org/configuration/route/sniff/">Sniff</a> for details.'));
+			_('Sniffed protocol, see <a target="_blank" href="https://xtls.github.io/en/config/features/sniffing.html">Sniff</a> for details.'));
 		so.value('bittorrent', _('BitTorrent'));
 		so.value('dtls', _('DTLS'));
 		so.value('http', _('HTTP'));

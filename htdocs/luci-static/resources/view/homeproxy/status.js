@@ -121,10 +121,10 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 	case 'homeproxy':
 		section = null;
 		break;
-	case 'sing-box-c':
+	case 'xray-c':
 		section = 'config';
 		break;
-	case 'sing-box-s':
+	case 'xray-s':
 		section = 'server';
 		break;
 	}
@@ -241,39 +241,13 @@ return view.extend({
 		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Resources management'));
 		s.anonymous = true;
 
-		o = s.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip4');
+		o = s.option(form.DummyValue, '_geoip_version', _('GeoIP database version'));
+		o.cfgvalue = L.bind(getResVersion, this, o, 'geoip');
 		o.rawhtml = true;
 
-		o = s.option(form.DummyValue, '_china_ip6_version', _('China IPv6 list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip6');
+		o = s.option(form.DummyValue, '_geosite_version', _('GeoSite database version'));
+		o.cfgvalue = L.bind(getResVersion, this, o, 'geosite');
 		o.rawhtml = true;
-
-		o = s.option(form.DummyValue, '_china_list_version', _('China list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'china_list');
-		o.rawhtml = true;
-
-		o = s.option(form.DummyValue, '_gfw_list_version', _('GFW list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'gfw_list');
-		o.rawhtml = true;
-
-		o = s.option(form.Value, 'github_token', _('GitHub token'));
-		o.password = true;
-		o.renderWidget = function() {
-			let node = form.Value.prototype.renderWidget.apply(this, arguments);
-
-			(node.querySelector('.control-group') || node).appendChild(E('button', {
-				'class': 'cbi-button cbi-button-apply',
-				'title': _('Save'),
-				'click': ui.createHandlerFn(this, () => {
-					return this.map.save(null, true).then(() => {
-						ui.changes.apply(true);
-					});
-				}, this.option)
-			}, [ _('Save') ]));
-
-			return node;
-		}
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
 		s.anonymous = true;
@@ -281,11 +255,11 @@ return view.extend({
 		o = s.option(form.DummyValue, '_homeproxy_logview');
 		o.render = L.bind(getRuntimeLog, this, o, _('HomeProxy'));
 
-		o = s.option(form.DummyValue, '_sing-box-c_logview');
-		o.render = L.bind(getRuntimeLog, this, o, _('sing-box client'));
+		o = s.option(form.DummyValue, '_xray-c_logview');
+		o.render = L.bind(getRuntimeLog, this, o, _('Xray client'));
 
-		o = s.option(form.DummyValue, '_sing-box-s_logview');
-		o.render = L.bind(getRuntimeLog, this, o, _('sing-box server'));
+		o = s.option(form.DummyValue, '_xray-s_logview');
+		o.render = L.bind(getRuntimeLog, this, o, _('Xray server'));
 
 		return m.render();
 	},
