@@ -1,4 +1,4 @@
-# HomeProxy (Xray Edition)
+# HomeProxy (Xray核心)
 
 基于 immortalwrt/homeproxy 修改，将代理核心从 sing-box 切换为 Xray-core。
 
@@ -19,7 +19,7 @@
 - HTTPUpgrade
 - QUIC
 - WebSocket
-- XHTTP
+- XHTTP（主要是sing-box不支持这个）
 
 ## 路由模式
 
