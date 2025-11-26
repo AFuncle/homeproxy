@@ -50,6 +50,15 @@ start_service() {
 
 	mkdir -p "$RUN_DIR"
 
+	# Ensure geoip/geosite files exist in /usr/share/xray
+	mkdir -p "/usr/share/xray"
+	if [ -f "/usr/share/v2ray/geoip.dat" ] && [ ! -f "/usr/share/xray/geoip.dat" ]; then
+		ln -sf "/usr/share/v2ray/geoip.dat" "/usr/share/xray/geoip.dat"
+	fi
+	if [ -f "/usr/share/v2ray/geosite.dat" ] && [ ! -f "/usr/share/xray/geosite.dat" ]; then
+		ln -sf "/usr/share/v2ray/geosite.dat" "/usr/share/xray/geosite.dat"
+	fi
+
 	if [ "$outbound_node" != "nil" ]; then
 		# Generate/Validate client config
 		ucode -S "$HP_DIR/scripts/generate_client.uc" 2>>"$LOG_PATH"
