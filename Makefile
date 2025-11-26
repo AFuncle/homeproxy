@@ -4,14 +4,12 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=The modern ImmortalWrt proxy platform for ARM64/AMD64
+LUCI_TITLE:=The modern OpenWrt proxy platform (Xray-core)
 LUCI_PKGARCH:=all
 LUCI_DEPENDS:= \
 	+xray-core \
 	+firewall4 \
-	+kmod-nft-tproxy \
-	+ucode-mod-digest \
-	+ucode-mod-json
+	+kmod-nft-tproxy
 
 PKG_NAME:=luci-app-homeproxy
 
