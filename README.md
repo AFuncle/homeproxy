@@ -54,3 +54,7 @@ opkg install xray-core v2ray-geoip v2ray-geosite
 opkg install luci-app-homeproxy_*.ipk
 opkg install luci-i18n-homeproxy-zh-cn_*.ipk  # 中文语言包（可选）
 ```
+<img width="1072" height="773" alt="image" src="https://github.com/user-attachments/assets/99cedf1c-123c-435a-8446-dd5358ec8487" />
+<img width="965" height="1219" alt="image" src="https://github.com/user-attachments/assets/9b69fbe9-b854-4845-a2c6-9879e6f9f5c8" />
+<img width="1029" height="1202" alt="image" src="https://github.com/user-attachments/assets/7868222d-f109-4b23-b546-54f8dfdff2b5" />
+
