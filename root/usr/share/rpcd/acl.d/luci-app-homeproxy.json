@@ -16,7 +16,10 @@
 		},
 		"write": {
 			"file": {
-				"/tmp/homeproxy_certificate.tmp": [ "write" ]
+				"/tmp/homeproxy_certificate.tmp": [ "write" ],
+				"/var/run/homeproxy/homeproxy.log": [ "write" ],
+				"/var/run/homeproxy/xray-c.log": [ "write" ],
+				"/var/run/homeproxy/xray-s.log": [ "write" ]
 			},
 			"uci": [ "homeproxy" ]
 		}
