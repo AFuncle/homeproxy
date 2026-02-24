@@ -20,11 +20,7 @@ function get_mk_value() {
 }
 
 PKG_NAME="$(get_mk_value "PKG_NAME")"
-if [ "$RELEASE_TYPE" == "release" ]; then
-	PKG_VERSION="$(get_mk_value "PKG_VERSION")"
-else
-	PKG_VERSION="$PKG_SOURCE_DATE_EPOCH~$(git rev-parse --short HEAD)"
-fi
+PKG_VERSION="$PKG_SOURCE_DATE_EPOCH~$(git rev-parse --short HEAD)"
 
 TEMP_DIR="$(mktemp -d -p $BASE_DIR)"
 TEMP_PKG_DIR="$TEMP_DIR/$PKG_NAME"
@@ -118,7 +114,7 @@ else
 		Package: $PKG_NAME
 		Version: $PKG_VERSION
 		Depends: libc, sing-box, firewall4, kmod-nft-tproxy, ucode-mod-digest, xray-core
-		Source: https://github.com/AFuncle/homeproxy
+		Source: https://github.com/immortalwrt/homeproxy
 		SourceName: $PKG_NAME
 		Section: luci
 		SourceDateEpoch: $PKG_SOURCE_DATE_EPOCH
