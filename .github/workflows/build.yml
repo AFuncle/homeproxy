@@ -48,6 +48,7 @@ jobs:
         run: |
           cd sdk
           make defconfig
+          echo "CONFIG_LUCI_JSMIN=n" >> .config
           make package/luci-app-homeproxy/compile V=s -j$(nproc)
 
       - name: Collect packages
