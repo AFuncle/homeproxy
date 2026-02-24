@@ -106,7 +106,7 @@ default_prerm' > "$TEMP_DIR/pre-deinstall"
 		--script "post-install:$TEMP_DIR/post-install" \
 		--script "post-upgrade:$TEMP_DIR/post-upgrade" \
 		--script "pre-deinstall:$TEMP_DIR/pre-deinstall" \
-		--info "depends:libc sing-box firewall4 kmod-nft-tproxy ucode-mod-digest xray-core" \
+		--info "depends:libc xray-core firewall4 kmod-nft-tproxy" \
 		--files "$TEMP_PKG_DIR" \
 		--output "$TEMP_DIR/${PKG_NAME}_${PKG_VERSION}.apk"
 
@@ -118,7 +118,7 @@ else
 		Package: $PKG_NAME
 		Version: $PKG_VERSION
 		Depends: libc, sing-box, firewall4, kmod-nft-tproxy, ucode-mod-digest, xray-core
-		Source: https://github.com/immortalwrt/homeproxy
+		Source: https://github.com/AFuncle/homeproxy
 		SourceName: $PKG_NAME
 		Section: luci
 		SourceDateEpoch: $PKG_SOURCE_DATE_EPOCH
