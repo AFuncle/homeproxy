@@ -9,7 +9,8 @@ LUCI_PKGARCH:=all
 LUCI_DEPENDS:= \
 	+xray-core \
 	+firewall4 \
-	+kmod-nft-tproxy
+	+kmod-nft-tproxy \
+	+ucode-mod-digest
 
 PKG_NAME:=luci-app-homeproxy
 

@@ -273,6 +273,37 @@ function generate_outbound(node) {
 	}
 	outbound.streamSettings.network = network;
 
+	/* Shadowsocks obfs plugin: translate obfs-local/simple-obfs to xray TCP header obfuscation */
+	if (node.type === 'shadowsocks' && !isEmpty(node.shadowsocks_plugin) && !isEmpty(node.shadowsocks_plugin_opts)) {
+		let plugin_opts = {};
+		for (let part in split(node.shadowsocks_plugin_opts, ';')) {
+			let kv = split(part, '=', 2);
+			if (length(kv) === 2)
+				plugin_opts[kv[0]] = kv[1];
+		}
+
+		if (plugin_opts.obfs === 'http') {
+			outbound.streamSettings.network = 'tcp';
+			outbound.streamSettings.tcpSettings = {
+				header: {
+					type: 'http',
+					request: {
+						version: '1.1',
+						method: 'GET',
+						path: [plugin_opts.path || '/'],
+						headers: {
+							'Host': [plugin_opts['obfs-host'] || 'www.bing.com'],
+							'User-Agent': ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'],
+							'Accept-Encoding': ['gzip, deflate'],
+							'Connection': ['keep-alive'],
+							'Pragma': 'no-cache'
+						}
+					}
+				}
+			};
+		}
+	}
+
 	/* TLS settings */
 	if (node.tls === '1') {
 		if (node.tls_reality === '1') {
@@ -825,6 +856,30 @@ if (routing_mode !== 'global') {
 		ip: ['geoip:private'],
 		outboundTag: 'direct-out'
 	});
+}
+
+/* Resolve node server domains via direct domestic DNS to avoid DNS deadlock.
+ * Without this, node domains (not in geosite:cn) would be resolved through
+ * the proxy DNS, but the proxy itself needs those domains resolved first,
+ * causing a circular dependency that prevents the proxy from starting. */
+if (config.dns && length(config.dns.servers)) {
+	let node_domains = [];
+	for (let outbound in config.outbounds) {
+		let addr = null;
+		if (outbound?.settings?.vnext?.[0]?.address)
+			addr = outbound.settings.vnext[0].address;
+		else if (outbound?.settings?.servers?.[0]?.address)
+			addr = outbound.settings.servers[0].address;
+		if (addr && !match(addr, /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) && !match(addr, /:/))
+			push(node_domains, 'full:' + addr);
+	}
+	if (length(node_domains)) {
+		unshift(config.dns.servers, {
+			address: china_dns_server || wan_dns,
+			port: 53,
+			domains: node_domains
+		});
+	}
 }
 
 /* Clean up empty arrays */
