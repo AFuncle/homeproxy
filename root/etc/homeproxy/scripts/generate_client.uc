@@ -328,12 +328,13 @@ function generate_outbound(node) {
 		outbound.streamSettings.security = 'none';
 	}
 
-	/* Socket options */
-	if (self_mark) {
-		outbound.streamSettings.sockopt = {
-			mark: strToInt(self_mark)
-		};
-	}
+	/* Socket options - always use Xray internal DNS for node domain resolution
+	 * to prevent DNS deadlock under transparent proxy */
+	outbound.streamSettings.sockopt = {
+		domainStrategy: (ipv6_support === '1') ? 'UseIP' : 'UseIPv4'
+	};
+	if (self_mark)
+		outbound.streamSettings.sockopt.mark = strToInt(self_mark);
 
 	/* Mux settings */
 	if (node.multiplex === '1') {
@@ -367,7 +368,7 @@ function get_outbound(cfg) {
 const config = {
 	log: {
 		loglevel: get_xray_loglevel(log_level),
-		access: RUN_DIR + '/xray-c.log',
+		access: (log_level in ['trace', 'debug', 'info']) ? (RUN_DIR + '/xray-c.log') : null,
 		error: RUN_DIR + '/xray-c.log'
 	},
 	dns: {
