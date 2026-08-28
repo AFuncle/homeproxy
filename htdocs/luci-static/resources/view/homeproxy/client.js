@@ -293,6 +293,11 @@ return view.extend({
 		o.default = o.enabled;
 		o.rmempty = false;
 
+		o = s.taboption('routing', form.Flag, 'traffic_analysis', _('Deep traffic analysis'),
+			_('Collect exact real-time and provider traffic statistics. Direct traffic on configured routing ports will pass through Xray, which may increase CPU usage on low-end routers.'));
+		o.default = o.disabled;
+		o.rmempty = false;
+
 		/* Custom routing settings start */
 		/* Routing settings start */
 		o = s.taboption('routing', form.SectionValue, '_routing', form.NamedSection, 'routing', 'homeproxy');

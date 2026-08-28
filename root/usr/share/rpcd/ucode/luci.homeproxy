@@ -8,6 +8,7 @@
 'use strict';
 
 import { access, error, lstat, popen, readfile, writefile } from 'fs';
+import { cursor } from 'uci';
 
 /* Kanged from ucode/luci */
 function shellquote(s) {
@@ -151,6 +152,46 @@ const methods = {
 			if (filestat)
 				writefile(`${RUN_DIR}/${req.args?.type}.log`, '');
 			return { result: true };
+		}
+	},
+
+	traffic_stats: {
+		call: function() {
+			const uci = cursor();
+			uci.load('homeproxy');
+			let metrics_port = uci.get('homeproxy', 'infra', 'metrics_port') || '5334';
+			if (!match(metrics_port, /^[0-9]+$/))
+				metrics_port = '5334';
+
+			const url = `http://127.0.0.1:${metrics_port}/debug/vars`;
+			const fd = popen(`/usr/bin/wget -qO- -T 2 ${shellquote(url)} 2>/dev/null`);
+			if (!fd)
+				return { result: false, error: 'unable to query Xray metrics' };
+
+			let content = '';
+			for (let line = fd.read('line'); length(line); line = fd.read('line'))
+				content += line;
+			fd.close();
+
+			let payload;
+			try {
+				payload = json(content);
+			} catch (e) {
+				return { result: false, error: 'invalid Xray metrics response' };
+			}
+
+			let categories = [];
+			try {
+				categories = json(readfile(`${HP_DIR}/resources/traffic_categories.json`));
+			} catch (e) { }
+			if (type(categories) !== 'array')
+				categories = [];
+
+			return {
+				result: true,
+				stats: payload?.stats || {},
+				categories: categories
+			};
 		}
 	},
 

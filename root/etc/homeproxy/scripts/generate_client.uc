@@ -45,7 +45,17 @@ if (!wan_dns)
 	wan_dns = (routing_mode in ['proxy_mainland_china', 'global']) ? '8.8.8.8' : '223.5.5.5';
 
 const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
+const metrics_port = uci.get(uciconfig, uciinfra, 'metrics_port') || '5334';
+const traffic_port = uci.get(uciconfig, uciinfra, 'traffic_port') || '5335';
 const ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0';
+const traffic_analysis = uci.get(uciconfig, ucimain, 'traffic_analysis') === '1';
+
+let traffic_categories = [];
+try {
+	traffic_categories = json(readfile(HP_DIR + '/resources/traffic_categories.json'));
+} catch (e) { }
+if (type(traffic_categories) !== 'array')
+	traffic_categories = [];
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound,
     dns_server, china_dns_server, direct_domain_list, proxy_domain_list,
@@ -82,11 +92,11 @@ if (routing_mode !== 'custom') {
 
 const proxy_mode = uci.get(uciconfig, ucimain, 'proxy_mode') || 'redirect_tproxy';
 const mixed_port = uci.get(uciconfig, uciinfra, 'mixed_port') || '5330';
+const self_mark = uci.get(uciconfig, uciinfra, 'self_mark') || '100';
 
-let self_mark, redirect_port, tproxy_port;
+let redirect_port, tproxy_port;
 
 if (match(proxy_mode, /redirect/)) {
-	self_mark = uci.get(uciconfig, 'infra', 'self_mark') || '100';
 	redirect_port = uci.get(uciconfig, 'infra', 'redirect_port') || '5331';
 }
 if (match(proxy_mode, /tproxy/)) {
@@ -377,6 +387,24 @@ const config = {
 	},
 	inbounds: [],
 	outbounds: [],
+	stats: {},
+	policy: {
+		levels: {
+			'0': {
+				statsUserUplink: true,
+				statsUserDownlink: true
+			}
+		},
+		system: {
+			statsInboundUplink: true,
+			statsInboundDownlink: true,
+			statsOutboundUplink: true,
+			statsOutboundDownlink: true
+		}
+	},
+	metrics: {
+		listen: '127.0.0.1:' + metrics_port
+	},
 	routing: {
 		domainStrategy: (ipv6_support !== '1') ? 'IPIfNonMatch' : 'AsIs',
 		rules: []
@@ -453,10 +481,10 @@ push(config.inbounds, {
 		auth: 'noauth',
 		udp: true
 	},
-	sniffing: strToBool(sniff_override) ? {
+	sniffing: (traffic_analysis || strToBool(sniff_override)) ? {
 		enabled: true,
 		destOverride: ['http', 'tls', 'quic'],
-		routeOnly: true
+		routeOnly: !traffic_analysis
 	} : null
 });
 
@@ -471,10 +499,10 @@ if (match(proxy_mode, /redirect/)) {
 			network: 'tcp',
 			followRedirect: true
 		},
-		sniffing: strToBool(sniff_override) ? {
+		sniffing: (traffic_analysis || strToBool(sniff_override)) ? {
 			enabled: true,
 			destOverride: ['http', 'tls', 'quic'],
-			routeOnly: true
+			routeOnly: !traffic_analysis
 		} : null
 	});
 }
@@ -490,10 +518,10 @@ if (tproxy_port) {
 			network: 'udp',
 			followRedirect: true
 		},
-		sniffing: strToBool(sniff_override) ? {
+		sniffing: (traffic_analysis || strToBool(sniff_override)) ? {
 			enabled: true,
 			destOverride: ['http', 'tls', 'quic'],
-			routeOnly: true
+			routeOnly: !traffic_analysis
 		} : null,
 		streamSettings: {
 			sockopt: {
@@ -501,6 +529,36 @@ if (tproxy_port) {
 			}
 		}
 	});
+}
+
+/* Authenticated local SOCKS bridge. Each provider uses a distinct username,
+ * allowing Xray's user counters to attribute exact bytes without changing the
+ * selected direct/proxy route on the second pass through the router. */
+if (traffic_analysis && length(traffic_categories)) {
+	let accounts = [];
+	for (let category in traffic_categories) {
+		if (type(category?.id) !== 'string' || type(category?.domains) !== 'array')
+			continue;
+		push(accounts, {
+			user: 'hp-traffic-' + category.id,
+			pass: 'homeproxy-local-traffic'
+		});
+	}
+
+	if (length(accounts)) {
+		push(config.inbounds, {
+			tag: 'traffic-stats-in',
+			protocol: 'socks',
+			listen: '127.0.0.1',
+			port: strToInt(traffic_port),
+			settings: {
+				auth: 'password',
+				accounts: accounts,
+				udp: true,
+				userLevel: 0
+			}
+		});
+	}
 }
 
 /* Outbounds */
@@ -517,6 +575,35 @@ push(config.outbounds, {
 		}
 	} : null
 });
+
+/* Provider accounting outbounds feed traffic back through the local SOCKS
+ * inbound. The original routing table then chooses the real outbound. */
+if (traffic_analysis) {
+	for (let category in traffic_categories) {
+		if (type(category?.id) !== 'string' || type(category?.domains) !== 'array')
+			continue;
+
+		push(config.outbounds, {
+			tag: 'hp-traffic-' + category.id + '-out',
+			protocol: 'socks',
+			settings: {
+				servers: [{
+					address: '127.0.0.1',
+					port: strToInt(traffic_port),
+					users: [{
+						user: 'hp-traffic-' + category.id,
+						pass: 'homeproxy-local-traffic'
+					}]
+				}]
+			},
+			streamSettings: {
+				sockopt: {
+					mark: strToInt(self_mark)
+				}
+			}
+		});
+	}
+}
 
 /* Block outbound */
 push(config.outbounds, {
@@ -681,6 +768,27 @@ push(config.routing.rules, {
 	network: 'udp',
 	outboundTag: 'block-out'
 });
+
+/* Classify the first pass only. Re-entered traffic has traffic-stats-in as its
+ * inbound tag and continues through the existing routing rules unchanged. */
+if (traffic_analysis) {
+	let source_inbounds = ['mixed-in'];
+	if (match(proxy_mode, /redirect/))
+		push(source_inbounds, 'redirect-in');
+	if (tproxy_port)
+		push(source_inbounds, 'tproxy-in');
+
+	for (let category in traffic_categories) {
+		if (type(category?.id) !== 'string' || type(category?.domains) !== 'array' || !length(category.domains))
+			continue;
+		push(config.routing.rules, {
+			type: 'field',
+			inboundTag: source_inbounds,
+			domain: category.domains,
+			outboundTag: 'hp-traffic-' + category.id + '-out'
+		});
+	}
+}
 
 if (main_node && main_node !== 'nil') {
 	/* Direct domains */

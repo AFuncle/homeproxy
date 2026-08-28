@@ -3049,3 +3049,128 @@ msgstr ""
 #: htdocs/luci-static/resources/homeproxy.js:328
 msgid "valid uuid"
 msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Basic statistics only"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Collect exact real-time and provider traffic statistics. Direct traffic on configured routing ports will pass through Xray, which may increase CPU usage on low-end routers."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Counters reset when Xray restarts"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Current sampling rate"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Deep analysis enabled"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Deep traffic analysis"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Download"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Downloaded since start"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Enable deep traffic analysis in Client Settings to classify Tencent, Baidu and other provider traffic by exact byte count."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Hover a provider name to see the domains included in that group. Unclassified IP-only or encrypted traffic remains in the total but is not assigned to a provider."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Last 60 samples; blue is download and green is upload."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Name"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "No classified traffic yet."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Open Client Settings"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Outbound traffic"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Provider and domain-group traffic"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Provider traffic ranking"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Real-time Xray traffic with exact provider attribution."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Real-time download"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Real-time traffic"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Real-time upload"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Share"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Top providers by total traffic."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Total"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+#: root/usr/share/luci/menu.d/luci-app-homeproxy.json
+msgid "Traffic Analysis"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Traffic counters grouped by the final Xray outbound."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Updated at %s"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Upload"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Uploaded since start"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Waiting for Xray metrics..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Xray metrics are unavailable."
+msgstr ""

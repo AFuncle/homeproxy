@@ -3119,3 +3119,128 @@ msgstr "有效端口值"
 #: htdocs/luci-static/resources/homeproxy.js:328
 msgid "valid uuid"
 msgstr "有效 uuid"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Basic statistics only"
+msgstr "仅基础统计"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Collect exact real-time and provider traffic statistics. Direct traffic on configured routing ports will pass through Xray, which may increase CPU usage on low-end routers."
+msgstr "采集精确的实时流量和服务商流量统计。配置路由端口内的直连流量将经过 Xray，低性能路由器的 CPU 占用可能会增加。"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Counters reset when Xray restarts"
+msgstr "Xray 重启后计数器将清零"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Current sampling rate"
+msgstr "当前采样速率"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Deep analysis enabled"
+msgstr "深度分析已开启"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Deep traffic analysis"
+msgstr "深度流量分析"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Download"
+msgstr "下载"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Downloaded since start"
+msgstr "启动后下载"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Enable deep traffic analysis in Client Settings to classify Tencent, Baidu and other provider traffic by exact byte count."
+msgstr "请在客户端设置中开启深度流量分析，以精确字节数归类腾讯、百度及其他服务商流量。"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Hover a provider name to see the domains included in that group. Unclassified IP-only or encrypted traffic remains in the total but is not assigned to a provider."
+msgstr "将鼠标停在服务商名称上可查看该组包含的域名。无法归类的纯 IP 或加密流量仍计入总流量，但不会归入服务商。"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Last 60 samples; blue is download and green is upload."
+msgstr "最近 60 个采样点；蓝色为下载，绿色为上传。"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Name"
+msgstr "名称"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "No classified traffic yet."
+msgstr "暂无已归类流量。"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Open Client Settings"
+msgstr "打开客户端设置"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Outbound traffic"
+msgstr "出站流量"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Provider and domain-group traffic"
+msgstr "服务商与域名组流量"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Provider traffic ranking"
+msgstr "服务商流量排行"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Real-time Xray traffic with exact provider attribution."
+msgstr "Xray 实时流量与精确服务商归类。"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Real-time download"
+msgstr "实时下载"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Real-time traffic"
+msgstr "实时流量"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Real-time upload"
+msgstr "实时上传"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Share"
+msgstr "占比"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Top providers by total traffic."
+msgstr "按总流量显示排名靠前的服务商。"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Total"
+msgstr "合计"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+#: root/usr/share/luci/menu.d/luci-app-homeproxy.json
+msgid "Traffic Analysis"
+msgstr "流量分析"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Traffic counters grouped by the final Xray outbound."
+msgstr "按最终 Xray 出站分组的流量计数器。"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Updated at %s"
+msgstr "更新于 %s"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Upload"
+msgstr "上传"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Uploaded since start"
+msgstr "启动后上传"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Waiting for Xray metrics..."
+msgstr "正在等待 Xray 指标……"
+
+#: htdocs/luci-static/resources/view/homeproxy/traffic.js
+msgid "Xray metrics are unavailable."
+msgstr "Xray 指标不可用。"

@@ -1,0 +1,92 @@
+[
+	{
+		"id": "youtube",
+		"label": "YouTube",
+		"domains": ["domain:youtube.com", "domain:youtu.be", "domain:ytimg.com", "domain:googlevideo.com"]
+	},
+	{
+		"id": "google",
+		"label": "Google",
+		"domains": ["domain:google.com", "domain:googleapis.com", "domain:gstatic.com", "domain:googleusercontent.com"]
+	},
+	{
+		"id": "tencent",
+		"label": "Tencent / WeChat",
+		"domains": ["domain:qq.com", "domain:tencent.com", "domain:wechat.com", "domain:qcloud.com", "domain:myqcloud.com", "domain:qpic.cn", "domain:gtimg.com"]
+	},
+	{
+		"id": "baidu",
+		"label": "Baidu",
+		"domains": ["domain:baidu.com", "domain:bdstatic.com", "domain:bcebos.com", "domain:bdimg.com", "domain:hao123.com"]
+	},
+	{
+		"id": "alibaba",
+		"label": "Alibaba / Taobao",
+		"domains": ["domain:alibaba.com", "domain:alibabacloud.com", "domain:aliyun.com", "domain:taobao.com", "domain:tmall.com", "domain:alipay.com", "domain:alicdn.com", "domain:1688.com", "domain:youku.com"]
+	},
+	{
+		"id": "bytedance",
+		"label": "ByteDance / Douyin",
+		"domains": ["domain:bytedance.com", "domain:byteimg.com", "domain:douyin.com", "domain:douyinvod.com", "domain:toutiao.com", "domain:ixigua.com", "domain:snssdk.com"]
+	},
+	{
+		"id": "bilibili",
+		"label": "Bilibili",
+		"domains": ["domain:bilibili.com", "domain:bilivideo.com", "domain:hdslb.com"]
+	},
+	{
+		"id": "jd",
+		"label": "JD.com",
+		"domains": ["domain:jd.com", "domain:jdcdn.com", "domain:jcloudcs.com", "domain:360buyimg.com"]
+	},
+	{
+		"id": "netease",
+		"label": "NetEase",
+		"domains": ["domain:163.com", "domain:126.com", "domain:netease.com", "domain:126.net"]
+	},
+	{
+		"id": "xiaomi",
+		"label": "Xiaomi",
+		"domains": ["domain:mi.com", "domain:miui.com", "domain:xiaomi.com", "domain:mijia.tech"]
+	},
+	{
+		"id": "apple",
+		"label": "Apple / iCloud",
+		"domains": ["domain:apple.com", "domain:icloud.com", "domain:mzstatic.com", "domain:apple-dns.net"]
+	},
+	{
+		"id": "microsoft",
+		"label": "Microsoft",
+		"domains": ["domain:microsoft.com", "domain:live.com", "domain:office.com", "domain:office365.com", "domain:windows.net", "domain:xboxlive.com", "domain:bing.com"]
+	},
+	{
+		"id": "github",
+		"label": "GitHub",
+		"domains": ["domain:github.com", "domain:githubusercontent.com", "domain:githubassets.com"]
+	},
+	{
+		"id": "openai",
+		"label": "OpenAI / ChatGPT",
+		"domains": ["domain:openai.com", "domain:chatgpt.com", "domain:oaiusercontent.com"]
+	},
+	{
+		"id": "telegram",
+		"label": "Telegram",
+		"domains": ["domain:telegram.org", "domain:telegram.me", "domain:t.me"]
+	},
+	{
+		"id": "netflix",
+		"label": "Netflix",
+		"domains": ["domain:netflix.com", "domain:netflix.net", "domain:nflxvideo.net", "domain:nflximg.net"]
+	},
+	{
+		"id": "meta",
+		"label": "Meta / Instagram",
+		"domains": ["domain:facebook.com", "domain:fbcdn.net", "domain:instagram.com", "domain:whatsapp.com", "domain:whatsapp.net"]
+	},
+	{
+		"id": "twitter",
+		"label": "X / Twitter",
+		"domains": ["domain:twitter.com", "domain:x.com", "domain:twimg.com"]
+	}
+]
