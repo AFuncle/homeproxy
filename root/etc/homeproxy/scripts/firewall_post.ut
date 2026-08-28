@@ -73,13 +73,14 @@ if (routing_port === 'common')
 	routing_port = uci.get(cfgname, 'infra', 'common_port') || '22,53,80,143,443,465,587,853,873,993,995,8080,8443,9418';
 
 const proxy_mode = uci.get(cfgname, 'config', 'proxy_mode') || 'redirect_tproxy',
-      ipv6_support = uci.get(cfgname, 'config', 'ipv6_support') || '0';
+      ipv6_support = uci.get(cfgname, 'config', 'ipv6_support') || '0',
+      traffic_analysis = uci.get(cfgname, 'config', 'traffic_analysis') || '0';
 
-let self_mark, redirect_port,
+let self_mark = uci.get(cfgname, 'infra', 'self_mark') || '100',
+    redirect_port,
     tproxy_port, tproxy_mark;
 
 if (match(proxy_mode, /redirect/)) {
-	self_mark = uci.get(cfgname, 'infra', 'self_mark') || '100';
 	redirect_port = uci.get(cfgname, 'infra', 'redirect_port') || '5331';
 }
 if (match(proxy_mode, /tproxy/)) {
@@ -334,6 +335,7 @@ chain homeproxy_redirect {
 	ip6 daddr @homeproxy_wan_direct_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 
+	{% if (traffic_analysis !== '1' || routing_mode === 'custom'): %}
 	{% if (routing_mode === 'gfwlist'): %}
 	ip daddr != @homeproxy_gfw_list_v4 counter return
 	{% if (ipv6_support === '1'): %}
@@ -350,6 +352,7 @@ chain homeproxy_redirect {
 	ip6 daddr != @homeproxy_mainland_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 	{% endif /* routing_mode */ %}
+	{% endif /* fast-path bypass */ %}
 
 	{% if (!isEmpty(control_info.lan_gaming_mode_ipv4_ips)): %}
 	ip saddr {{ array_to_nftarr(control_info.lan_gaming_mode_ipv4_ips) }} counter goto homeproxy_redirect_proxy
@@ -455,6 +458,7 @@ chain homeproxy_mangle_prerouting {
 	ip6 daddr @homeproxy_wan_direct_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 
+	{% if (traffic_analysis !== '1' || routing_mode === 'custom'): %}
 	{% if (routing_mode === 'gfwlist'): %}
 	ip daddr != @homeproxy_gfw_list_v4 counter return
 	{% if (ipv6_support === '1'): %}
@@ -475,6 +479,7 @@ chain homeproxy_mangle_prerouting {
 	ip6 daddr != @homeproxy_mainland_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 	{% endif /* routing_mode */ %}
+	{% endif /* fast-path bypass */ %}
 
 	{% if (!isEmpty(control_info.lan_gaming_mode_ipv4_ips)): %}
 	ip saddr {{ array_to_nftarr(control_info.lan_gaming_mode_ipv4_ips) }} counter goto homeproxy_mangle_tproxy
@@ -507,6 +512,7 @@ chain homeproxy_mangle_output {
 	ip6 daddr @homeproxy_wan_direct_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 
+	{% if (traffic_analysis !== '1' || routing_mode === 'custom'): %}
 	{% if (routing_mode === 'gfwlist'): %}
 	ip daddr != @homeproxy_gfw_list_v4 counter return
 	{% if (ipv6_support === '1'): %}
@@ -523,6 +529,7 @@ chain homeproxy_mangle_output {
 	ip6 daddr != @homeproxy_mainland_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 	{% endif /* routing_mode */ %}
+	{% endif /* fast-path bypass */ %}
 
 	counter goto homeproxy_mangle_mark
 }
